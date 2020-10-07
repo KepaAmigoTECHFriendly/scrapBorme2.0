@@ -1,0 +1,26 @@
+Package: scrapBorme
+Type: Package
+Title: Scrapea el Borme en PDF y devuelve un json con con el resultado.
+Version: 0.1.0
+Author: Ainhoa Rojano and Kepa Amigo
+Maintainer: Ainhoa Rojano <ainhoa@techfriendly.es> and Kepa Amigo <kepa@techfriendly.es>
+Description: Scrapea el Borme en PDF, devuelve un json con con los campos reflejados por empresa en el borme y lo envía a la plataforma Smart City.
+License: GPL-2
+Encoding: UTF-8
+LazyData: FLASE
+Imports:
+  jsonlite,
+  pdftools,
+  tidyverse,
+  tidyr,
+  stringr,
+  dplyr,
+  RSelenium,
+  httr, 
+  rvest,
+  geosphere,
+  anytime,
+  xml2,
+  purrr,
+  tm
+RoxygenNote: 7.1.0
