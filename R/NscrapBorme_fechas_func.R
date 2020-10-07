@@ -603,6 +603,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         #tsi <- sub("\\..*", "",tsi)
         for(i in 1:nrow(data)){
           ts <- as.numeric(tsi) +i  #Añade i ms al timestamp para poder verse sin solapamiento en el widget de la plataforma smart city.
+          print(ts)
 
           #Creación de JSON noticias y eliminación de ][ para cumplir con el formato json con modificación de timestamp de thingsboard.
           json_borme <- jsonlite::toJSON(data[i,],pretty=T)
