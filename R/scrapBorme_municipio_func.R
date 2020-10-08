@@ -518,7 +518,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   con <- dbConnect(RPostgres::Postgres(), dbname = db, host=host_db, port=db_port, user=db_user, password=db_password)
 
   # 2) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
-  dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
+  dbWriteTable(con, 'borme_temporal',data, temporary = TRUE, overwrite = TRUE)
 
   # 3) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
   inicio_consulta_evitar_duplicados <- paste('UPDATE borme SET')

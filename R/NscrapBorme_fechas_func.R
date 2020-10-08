@@ -40,7 +40,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
   db_password <- 'root_tech_2019'
 
   con <- dbConnect(RPostgres::Postgres(), dbname = db, host=host_db, port=db_port, user=db_user, password=db_password)
-
+  print(con@bigint)
 
   url_general <- "https://www.boe.es/borme/dias/"
   municipio <- municipio
@@ -605,7 +605,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         # =================================================================
 
         # 1) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
-        dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
+        dbWriteTable(con, 'borme_temporal',data, temporary = TRUE, overwrite = TRUE)
 
         # 2) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
         inicio_consulta_evitar_duplicados <- paste('UPDATE borme SET')
