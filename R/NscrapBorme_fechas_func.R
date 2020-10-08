@@ -30,6 +30,24 @@
 #'
 #' @export
 
+library(rvest)
+library(jsonlite)
+library(pdftools)
+library(tidyverse)
+library(stringr)
+library(tidyr)
+library(dplyr)
+library(RSelenium)
+library(httr)
+library(tm)
+library(geosphere)
+library(anytime)
+library(xml2)
+library(purrr)
+library(RPostgres)
+library(RPostgreSQL)
+library(DBI)
+
 N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Date()){
 
   # 1) CONEXIÓN BBDD
@@ -143,8 +161,8 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         pos_barras <- gregexpr(pattern = "[/]+",text = url)
         #nombre_borme <- substr(url,pos_barras[[1]][length(pos_barras[[1]])]+1,pos_puntos[[1]][length(pos_puntos[[1]])]-1)
 
-        #archivo_temporal <- tempfile(pattern = "", tmpdir = tempdir(), fileext = ".pdf")
-        archivo_temporal <- tempfile(pattern = "", tmpdir = "/var/tmp", fileext = ".pdf")
+        archivo_temporal <- tempfile(pattern = "", tmpdir = tempdir(), fileext = ".pdf")
+        #archivo_temporal <- tempfile(pattern = "", tmpdir = "/var/tmp", fileext = ".pdf")
         # mode = wb es en binary
         download.file(url, destfile = archivo_temporal, mode = "wb")
 
@@ -604,20 +622,32 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         # VOLCADO EN BBDD POSTGRESQL
         # =================================================================
 
-        # 1) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
-        dbWriteTable(con, 'borme_temporal',data, temporary = TRUE, overwrite = TRUE)
+        n_registros <- dbGetQuery(con, "SELECT COUNT(*) FROM borme")
+        print(n_registros[,1])
+        if(n_registros[,1] > 0){
 
-        # 2) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
-        inicio_consulta_evitar_duplicados <- paste('UPDATE borme SET')
-        seleccion_columnas_tablas <- paste(paste('"',colnames(data), '"',paste(' = borme_temporal."',colnames(data),'"',sep = ""),sep = ""), collapse = ", ")
-        final_consulta_evitar_duplicados <- 'FROM borme_temporal WHERE borme_temporal."EMPRESA" != borme."EMPRESA" AND borme_temporal.fecha != borme.fecha'
-        consulta_evitar_duplicados <- paste(inicio_consulta_evitar_duplicados,
-                                            seleccion_columnas_tablas,
-                                            final_consulta_evitar_duplicados)
+          # 1) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
+          dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-        dbGetQuery(con, consulta_evitar_duplicados)
+          consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b.fecha = a.fecha)'
 
-        retorno <- data
+
+          # 2) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
+          #inicio_consulta_evitar_duplicados <- paste('UPDATE borme SET')
+          #seleccion_columnas_tablas <- paste(paste('"',colnames(data), '"',paste(' = borme_temporal."',colnames(data),'"',sep = ""),sep = ""), collapse = ", ")
+          #final_consulta_evitar_duplicados <- 'FROM borme_temporal WHERE borme_temporal."EMPRESA" != borme."EMPRESA" OR borme_temporal.fecha != borme.fecha'
+          #consulta_evitar_duplicados <- paste(inicio_consulta_evitar_duplicados,
+          #                                    seleccion_columnas_tablas,
+          #                                    final_consulta_evitar_duplicados)
+
+          dbGetQuery(con, consulta_evitar_duplicados)
+
+          dbRemoveTable(con,"borme_temporal")
+        }else{
+          dbWriteTable(con, 'borme',data, append = TRUE)
+        }
+
+        retorno <- 1
       }
 
       #==========================================================================
