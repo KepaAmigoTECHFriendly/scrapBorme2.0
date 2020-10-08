@@ -24,10 +24,23 @@
 #' anytime
 #' xml2
 #' purrr
+#' RPostgres
+#' RPostgreSQL
+#' DBI
 #'
 #' @export
 
 N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Date()){
+
+  # 1) CONEXIÓN BBDD
+  db          <- 'amb'
+  host_db     <- '94.130.26.60'
+  db_port     <- '5432'
+  db_user     <- 'postgres'
+  db_password <- 'root_tech_2019'
+
+  con <- dbConnect(RPostgres::Postgres(), dbname = db, host=host_db, port=db_port, user=db_user, password=db_password)
+
 
   url_general <- "https://www.boe.es/borme/dias/"
   municipio <- municipio
@@ -583,41 +596,28 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         data$`Distancia respecto municipio km` <- unlist(distancia_geometrica_coordenadas)
         data$`Dentro del radio de referencia km` <- unlist(empresa_dentro_del_radio)
         data$`Provincia Borme` <- provincia
+        data$fecha <- rep(format(as.Date(fecha_borme),"%d/%m/%Y"),nrow(data))
 
         data[is.na(data)] <- "-"
 
+        # =================================================================
+        # VOLCADO EN BBDD POSTGRESQL
+        # =================================================================
 
-        #################################################################
-        # CREACIÓN JSON Y ENVÍO A PLATAFORMA SMART CITY
-        #################################################################
+        # 1) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
+        dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-        nombreArchivo<-info$keys$Subject
-        #write.csv(BBDD,paste('C:\\TechFriendly\\IZARRA\\Borme\\',paste(nombreArchivo,".csv",collapse=""),collapse=""),row.names=F)
-        #write_json(BBDD,paste('C:\\TechFriendly\\IZARRA\\Borme\\paquete_borme\\',paste(nombreArchivo,".json",collapse=""),collapse=""),pretty=T)
+        # 2) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
+        inicio_consulta_evitar_duplicados <- paste('UPDATE borme SET')
+        seleccion_columnas_tablas <- paste(paste('"',colnames(data), '"',paste(' = borme_temporal."',colnames(data),'"',sep = ""),sep = ""), collapse = ", ")
+        final_consulta_evitar_duplicados <- 'FROM borme_temporal WHERE borme_temporal."EMPRESA" != borme."EMPRESA" AND borme_temporal.fecha != borme.fecha'
+        consulta_evitar_duplicados <- paste(inicio_consulta_evitar_duplicados,
+                                            seleccion_columnas_tablas,
+                                            final_consulta_evitar_duplicados)
 
-        json_borme_return <- jsonlite::toJSON(data,pretty=T)
+        dbGetQuery(con, consulta_evitar_duplicados)
 
-        #Extracción timestamp en formato unix
-        tsi <- format(as.numeric(anytime(fecha_borme))*1000,scientific = F)
-        print(tsi)
-        #tsi <- sub("\\..*", "",tsi)
-        for(i in 1:nrow(data)){
-          ts <- as.numeric(tsi) +i  #Añade i ms al timestamp para poder verse sin solapamiento en el widget de la plataforma smart city.
-          print(ts)
-
-          #Creación de JSON noticias y eliminación de ][ para cumplir con el formato json con modificación de timestamp de thingsboard.
-          json_borme <- jsonlite::toJSON(data[i,],pretty=T)
-          json_borme <- sub("[[]","",json_borme)
-          json_borme <- sub("[]]","",json_borme)
-
-          #Formato json con modificación de timestamp de thingsboard.
-          json_envio_plataforma <- paste('{"ts":',ts,', "values":',json_borme,"}",sep="")
-
-          #Envío JSON a plataforma
-          POST(url=TB_url,body=json_envio_plataforma)
-        }
-
-        retorno <- json_borme_return
+        retorno <- data
       }
 
       #==========================================================================
@@ -642,6 +642,8 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
              }
       )
 
+      con %>% dbDisconnect()
+
       #json_envio_plataforma <- error_plataforma
       #Envío JSON a plataforma
       #POST(url=TB_url,body=json_envio_plataforma)
@@ -650,7 +652,6 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
 
   }
 
-
-
+  con %>% dbDisconnect()
   return(retorno)
 }
