@@ -30,24 +30,6 @@
 #'
 #' @export
 
-library(rvest)
-library(jsonlite)
-library(pdftools)
-library(tidyverse)
-library(stringr)
-library(tidyr)
-library(dplyr)
-library(RSelenium)
-library(httr)
-library(tm)
-library(geosphere)
-library(anytime)
-library(xml2)
-library(purrr)
-library(RPostgres)
-library(RPostgreSQL)
-library(DBI)
-
 N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Date()){
 
   # 1) CONEXIÓN BBDD
