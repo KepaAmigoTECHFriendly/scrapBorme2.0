@@ -622,30 +622,30 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         # VOLCADO EN BBDD POSTGRESQL
         # =================================================================
 
-        n_registros <- dbGetQuery(con, "SELECT COUNT(*) FROM borme")
-        print(n_registros[,1])
-        if(n_registros[,1] > 0){
+        # 1) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
+        #dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-          # 1) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
-          dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
-
-          consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b.fecha = a.fecha)'
+        #consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b.fecha = a.fecha)'
 
 
-          # 2) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
-          #inicio_consulta_evitar_duplicados <- paste('UPDATE borme SET')
-          #seleccion_columnas_tablas <- paste(paste('"',colnames(data), '"',paste(' = borme_temporal."',colnames(data),'"',sep = ""),sep = ""), collapse = ", ")
-          #final_consulta_evitar_duplicados <- 'FROM borme_temporal WHERE borme_temporal."EMPRESA" != borme."EMPRESA" OR borme_temporal.fecha != borme.fecha'
-          #consulta_evitar_duplicados <- paste(inicio_consulta_evitar_duplicados,
-          #                                    seleccion_columnas_tablas,
-          #                                    final_consulta_evitar_duplicados)
 
-          dbGetQuery(con, consulta_evitar_duplicados)
 
-          dbRemoveTable(con,"borme_temporal")
-        }else{
-          dbWriteTable(con, 'borme',data, append = TRUE)
-        }
+
+        # 2) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
+        #inicio_consulta_evitar_duplicados <- paste('UPDATE borme SET')
+        #seleccion_columnas_tablas <- paste(paste('"',colnames(data), '"',paste(' = borme_temporal."',colnames(data),'"',sep = ""),sep = ""), collapse = ", ")
+        #final_consulta_evitar_duplicados <- 'FROM borme_temporal WHERE borme_temporal."EMPRESA" != borme."EMPRESA" OR borme_temporal.fecha != borme.fecha'
+        #consulta_evitar_duplicados <- paste(inicio_consulta_evitar_duplicados,
+        #                                    seleccion_columnas_tablas,
+        #                                    final_consulta_evitar_duplicados)
+
+
+
+
+
+        #dbRemoveTable(con,"borme_temporal")
+
+        dbWriteTable(con, 'borme',data, append = TRUE)
 
         retorno <- 1
       }
