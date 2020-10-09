@@ -30,6 +30,24 @@
 #'
 #' @export
 
+library(rvest)
+library(jsonlite)
+library(pdftools)
+library(tidyverse)
+library(stringr)
+library(tidyr)
+library(dplyr)
+library(RSelenium)
+library(httr)
+library(tm)
+library(geosphere)
+library(anytime)
+library(xml2)
+library(purrr)
+library(RPostgres)
+library(RPostgreSQL)
+library(DBI)
+
 N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Date()){
 
   # 1) CONEXIÓN BBDD
@@ -596,7 +614,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         data$`Distancia respecto municipio km` <- unlist(distancia_geometrica_coordenadas)
         data$`Dentro del radio de referencia km` <- unlist(empresa_dentro_del_radio)
         data$`Provincia Borme` <- provincia
-        data$fecha <- rep(format(as.Date(fecha_borme),"%d/%m/%Y"),nrow(data))
+        data$fecha <- rep(format(fecha_borme,"%d/%m/%Y"),nrow(data))
 
         data[is.na(data)] <- "-"
 
@@ -605,9 +623,9 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         # =================================================================
 
         # 1) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
-        dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
+        #dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-        consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b.fecha = a.fecha)'
+        #consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b.fecha = a.fecha)'
 
 
         # 2) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
@@ -620,10 +638,10 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
 
 
 
-        dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
-        dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
+        #dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
+        #dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
 
-        #dbWriteTable(con, 'borme',data, append = TRUE)
+        dbWriteTable(con, 'borme',data, append = TRUE)
 
         retorno <- 1
       }
