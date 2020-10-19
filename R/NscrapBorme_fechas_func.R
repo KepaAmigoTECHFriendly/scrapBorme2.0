@@ -660,6 +660,5 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
 
   }
 
-  con %>% dbDisconnect()
   return(retorno)
 }

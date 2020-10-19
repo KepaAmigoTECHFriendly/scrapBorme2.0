@@ -536,6 +536,5 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
   dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
 
-  con %>% dbDisconnect()
   return(data)
 }
