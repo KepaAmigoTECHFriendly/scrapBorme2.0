@@ -650,8 +650,6 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
              }
       )
 
-      con %>% dbDisconnect()
-
       #json_envio_plataforma <- error_plataforma
       #Envío JSON a plataforma
       #POST(url=TB_url,body=json_envio_plataforma)
