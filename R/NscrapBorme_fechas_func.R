@@ -596,8 +596,8 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         data$`Distancia respecto municipio km` <- unlist(distancia_geometrica_coordenadas)
         data$`Dentro del radio de referencia km` <- unlist(empresa_dentro_del_radio)
         data$`Provincia Borme` <- provincia
-        data$fecha <- rep(format(fecha_borme,"%d/%m/%Y"),nrow(data))
-
+        fecha_borme <- format(fecha_borme,"%Y/%m/%d")
+        data$fecha <- rep(format(as.Date(fecha_borme),"%d/%m/%Y"),nrow(data))
         data[is.na(data)] <- "-"
 
         # =================================================================
