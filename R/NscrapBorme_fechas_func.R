@@ -33,11 +33,11 @@
 N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Date()){
 
   # 1) CONEXIÓN BBDD
-  db          <- 'amb'
-  host_db     <- '94.130.26.60'
+  db          <- 'datawarehouse'
+  host_db     <- '82.223.243.42'
   db_port     <- '5432'
   db_user     <- 'postgres'
-  db_password <- 'root_tech_2019'
+  db_password <- 'postgressysadmin_2019'
 
   con <- dbConnect(RPostgres::Postgres(), dbname = db, host=host_db, port=db_port, user=db_user, password=db_password)
   print(con@bigint)
@@ -605,9 +605,10 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         # =================================================================
 
         # 1) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
-        dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
+        dbWriteTable(con, 'borme',data, temporary = FALSE)
+        #dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-        consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b.fecha = a.fecha)'
+        #consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b.fecha = a.fecha)'
 
 
         # 2) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
@@ -620,8 +621,8 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
 
 
 
-        dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
-        dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
+        #dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
+        #dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
 
         #dbWriteTable(con, 'borme',data, append = TRUE)
 
