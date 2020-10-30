@@ -474,7 +474,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
 
         #Coordenadas de referencia del municipio con geocoder API
         #Endpoint geocoder API
-        geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=Gu5LAWMlU4PyzTwSIj-7eK052fzFmkpOvItCbWm0TKU&searchtext="
+        geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=h8VwThvanUrJLPb-LHm12AA-PpcgtY31b57qx4066N0text="
 
         coordenadas_ref_municipio <- jsonlite::fromJSON(paste(geocoder_endpoint,URLencode(municipio),"%20(Espa%C3%B1a)",sep = ""))
         coordenadas_ref_municipio <- coordenadas_ref_municipio$Response$View$Result %>% as.data.frame()
@@ -599,6 +599,8 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         fecha_borme <- format(fecha_borme,"%Y/%m/%d")
         data$fecha <- rep(format(as.Date(fecha_borme),"%d/%m/%Y"),nrow(data))
         data[is.na(data)] <- "-"
+
+        print("data")
 
         # =================================================================
         # VOLCADO EN BBDD POSTGRESQL

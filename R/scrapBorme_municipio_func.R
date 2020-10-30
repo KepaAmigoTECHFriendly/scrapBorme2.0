@@ -509,11 +509,11 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   # ==========================================================
 
   # 1) CONEXIÓN BBDD
-  db          <- 'amb'
-  host_db     <- '94.130.26.60'
+  db          <- 'datawarehouse'
+  host_db     <- '82.223.243.42'
   db_port     <- '5432'
   db_user     <- 'postgres'
-  db_password <- 'root_tech_2019'
+  db_password <- 'postgressysadmin_2019'
 
   con <- dbConnect(RPostgres::Postgres(), dbname = db, host=host_db, port=db_port, user=db_user, password=db_password)
 
