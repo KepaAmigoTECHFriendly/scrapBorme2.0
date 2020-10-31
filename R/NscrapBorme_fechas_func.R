@@ -477,6 +477,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=h8VwThvanUrJLPb-LHm12AA-PpcgtY31b57qx4066N0&searchtext="
 
         coordenadas_ref_municipio <- jsonlite::fromJSON(paste(geocoder_endpoint,URLencode(municipio),"%20(Espa%C3%B1a)",sep = ""))
+        print("API 1")
         coordenadas_ref_municipio <- coordenadas_ref_municipio$Response$View$Result %>% as.data.frame()
         longitud_ref_municipio <- coordenadas_ref_municipio$Location$DisplayPosition$Longitude
         latitud_ref_municipio <- coordenadas_ref_municipio$Location$DisplayPosition$Latitude
@@ -503,7 +504,8 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
             domicilio <- gsub(" ","%20",domicilio)
             domicilio <- iconv(domicilio,from="UTF-8",to="ASCII//TRANSLIT")
 
-            coordenadas_domicilios <- jsonlite::fromJSON(paste(geocoder_endpoint, domicilio,sep=""))
+            coordenadas_domicilios <- jsonlite::fromJSON(paste(geocoder_endpoint, URLencode(domicilio),"%20(Espa%C3%B1a)",sep=""))
+            print("API 2")
             coordenadas_domicilios <- coordenadas_domicilios$Response$View$Result %>% as.data.frame()
 
             if(is.na(domicilio) | is.null(coordenadas_domicilios$Location$DisplayPosition$Longitude[1])){
