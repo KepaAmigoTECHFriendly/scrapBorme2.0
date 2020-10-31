@@ -503,7 +503,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
             domicilio <- gsub(" ","%20",domicilio)
             domicilio <- iconv(domicilio,from="UTF-8",to="ASCII//TRANSLIT")
 
-            coordenadas_domicilios <- jsonlite::fromJSON(paste(geocoder_endpoint, URLencode(domicilio),"%20(Espa%C3%B1a)",sep=""))
+            coordenadas_domicilios <- jsonlite::fromJSON(paste(geocoder_endpoint,domicilio,sep=""))
             coordenadas_domicilios <- coordenadas_domicilios$Response$View$Result %>% as.data.frame()
 
             if(is.na(domicilio) | is.null(coordenadas_domicilios$Location$DisplayPosition$Longitude[1])){
