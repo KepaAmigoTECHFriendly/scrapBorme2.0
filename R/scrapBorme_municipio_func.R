@@ -380,7 +380,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
 
   #Coordenadas de referencia del municipio con geocoder API
   #Endpoint geocoder API
-  geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=Gu5LAWMlU4PyzTwSIj-7eK052fzFmkpOvItCbWm0TKU&searchtext="
+  geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=H8VwThvanUrJLPb-LHm12AA-PpcgtY31b57qx4066N0&searchtext="
 
   coordenadas_ref_municipio <- jsonlite::fromJSON(paste(geocoder_endpoint,URLencode(municipio),"%20(Espa%C3%B1a)",sep = ""))
   coordenadas_ref_municipio <- coordenadas_ref_municipio$Response$View$Result %>% as.data.frame()
