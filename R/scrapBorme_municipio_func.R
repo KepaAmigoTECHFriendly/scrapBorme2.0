@@ -39,10 +39,6 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   radio_ref <- radio
   provincia <- provincia
 
-  #Envío JSON a plataforma
-  TB_token <- "eFbps1EKXC6fpqksxNLX"
-  TB_url   <- paste("http://78.47.39.122:8080/api/v1/",TB_token,"/telemetry",sep="")
-
   pos_puntos <- gregexpr(pattern = "[[:punct:]]+",text = url)
   pos_barras <- gregexpr(pattern = "[/]+",text = url)
   #nombre_borme <- substr(url,pos_barras[[1]][length(pos_barras[[1]])]+1,pos_puntos[[1]][length(pos_puntos[[1]])]-1)
@@ -536,5 +532,5 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
   dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
 
-  return(data)
+  return(1)
 }
