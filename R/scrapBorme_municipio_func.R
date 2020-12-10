@@ -376,7 +376,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
 
   #Coordenadas de referencia del municipio con geocoder API
   #Endpoint geocoder API
-  geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=nQ2hv2xZ5JqWL72bJKiytIF5OZeDVLTqJVt3QZs9PzE&searchtext="
+  geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=vHM__74tNz7Mgyszyld_kleAIdVpSRHYEeRfcSqM6XQ&searchtext="
 
   coordenadas_ref_municipio <- jsonlite::fromJSON(paste(geocoder_endpoint,URLencode(municipio),"%20(Espa%C3%B1a)",sep = ""))
   coordenadas_ref_municipio <- coordenadas_ref_municipio$Response$View$Result %>% as.data.frame()
@@ -505,11 +505,11 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   # ==========================================================
 
   # 1) CONEXIÓN BBDD
-  db          <- 'amb'
-  host_db     <- '94.130.26.60'
+  db          <- 'datawarehouse'
+  host_db     <- '82.223.66.83'
   db_port     <- '5432'
   db_user     <- 'postgres'
-  db_password <- 'root_tech_2019'
+  db_password <- 'postgressysadmin_2019'
 
   con <- dbConnect(RPostgres::Postgres(), dbname = db, host=host_db, port=db_port, user=db_user, password=db_password)
 
@@ -517,17 +517,6 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
   consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b.fecha = a.fecha)'
-
-
-  # 2) ESCRITURA EN TABLA PRINCIPAL COMPARANDO CON LA TEMPORAL
-  #inicio_consulta_evitar_duplicados <- paste('UPDATE borme SET')
-  #seleccion_columnas_tablas <- paste(paste('"',colnames(data), '"',paste(' = borme_temporal."',colnames(data),'"',sep = ""),sep = ""), collapse = ", ")
-  #final_consulta_evitar_duplicados <- 'FROM borme_temporal WHERE borme_temporal."EMPRESA" != borme."EMPRESA" OR borme_temporal.fecha != borme.fecha'
-  #consulta_evitar_duplicados <- paste(inicio_consulta_evitar_duplicados,
-  #                                    seleccion_columnas_tablas,
-  #                                    final_consulta_evitar_duplicados)
-
-
 
   dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
   dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
