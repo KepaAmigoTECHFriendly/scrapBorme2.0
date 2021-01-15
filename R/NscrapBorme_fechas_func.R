@@ -634,7 +634,6 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
 
         forma_juridica <- c()
         for(i in 1:length(data$Empresa)){
-          print(i)
           pos_ultimo_espacio <- gregexpr(" ",data$Empresa[i])[[1]][length(gregexpr(" ",data$Empresa[i])[[1]])]
           forma_juridica1 <- str_trim(substring(data$Empresa[i],pos_ultimo_espacio,nchar(data$Empresa[i])))
           if(nchar(forma_juridica1) > 3){
@@ -664,7 +663,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         #dbWriteTable(con, 'borme',data, temporary = FALSE)
         dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-        consulta_evitar_duplicados <- 'INSERT INTO borme2 SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme2 b where b."EMPRESA" = a."EMPRESA" AND b.fecha = a.fecha)'
+        consulta_evitar_duplicados <- 'INSERT INTO borme2 SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme2 b where b."Empresa" = a."Empresa" AND b.Fecha = a.Fecha)'
 
         dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
         dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
