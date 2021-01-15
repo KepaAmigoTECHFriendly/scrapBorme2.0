@@ -663,7 +663,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         #dbWriteTable(con, 'borme',data, temporary = FALSE)
         dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-        consulta_evitar_duplicados <- 'INSERT INTO borme2 SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme2 b where b."Empresa" = a."Empresa" AND b.Fecha = a.Fecha)'
+        consulta_evitar_duplicados <- 'INSERT INTO borme2 SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme2 b where b."Empresa" = a."Empresa" AND b."Fecha" = a."Fecha")'
 
         dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
         dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal

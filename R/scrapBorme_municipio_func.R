@@ -569,7 +569,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   # 2) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
   dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-  consulta_evitar_duplicados <- 'INSERT INTO borme2 SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme2 b where b."Empresa" = a."Empresa" AND b.Fecha = a.Fecha)'
+  consulta_evitar_duplicados <- 'INSERT INTO borme2 SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme2 b where b."Empresa" = a."Empresa" AND b."Fecha" = a."Fecha")'
 
   dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
   dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
