@@ -532,7 +532,6 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   #Extracción forma jurídica
   forma_juridica <- c()
   for(i in 1:length(data$Empresa)){
-    print(i)
     pos_ultimo_espacio <- gregexpr(" ",data$Empresa[i])[[1]][length(gregexpr(" ",data$Empresa[i])[[1]])]
     forma_juridica1 <- str_trim(substring(data$Empresa[i],pos_ultimo_espacio,nchar(data$Empresa[i])))
     if(nchar(forma_juridica1) > 3){
