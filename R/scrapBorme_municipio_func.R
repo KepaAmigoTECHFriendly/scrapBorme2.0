@@ -376,7 +376,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
 
   #Coordenadas de referencia del municipio con geocoder API
   #Endpoint geocoder API
-  geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=nQ2hv2xZ5JqWL72bJKiytIF5OZeDVLTqJVt3QZs9PzE&searchtext="
+  geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=Xey7gbg0XzIeEeLVFheau032gFXySwY1oQOlhpVZn34&searchtext="
 
   coordenadas_ref_municipio <- jsonlite::fromJSON(paste(geocoder_endpoint,URLencode(municipio),"%20(Espa%C3%B1a)",sep = ""))
   coordenadas_ref_municipio <- coordenadas_ref_municipio$Response$View$Result %>% as.data.frame()
@@ -501,7 +501,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   data[is.na(data)] <- "-"
 
   #Cambio nombres
-  nombres <- c("Empresa","Fusión sociedades abosrbidas", "Modificaciones estatutarias",
+  nombres <- c("Denominación social","Fusión sociedades absorbidas", "Modificaciones estatutarias",
                "Cambio denominación social", "Cambio domicilio social", "Cambio objeto social",
                "Ceses liquiSoli", "Ceses apoderado", "Ceses Adm. Único",
                "Ceses liquidador", "Ceses liquidador mancomunado", "Ceses adminSolid",
@@ -530,24 +530,63 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   colnames(data) <- nombres
 
   #Extracción forma jurídica
-  forma_juridica <- c()
-  for(i in 1:length(data$Empresa)){
-    pos_ultimo_espacio <- gregexpr(" ",data$Empresa[i])[[1]][length(gregexpr(" ",data$Empresa[i])[[1]])]
-    forma_juridica1 <- str_trim(substring(data$Empresa[i],pos_ultimo_espacio,nchar(data$Empresa[i])))
-    if(nchar(forma_juridica1) > 3){
-      nuevo_nombre <- gsub(" EN LIQUIDACION","",data$Empresa[i])
-      pos_ultimo_espacio <- gregexpr(" ",nuevo_nombre)[[1]][length(gregexpr(" ",nuevo_nombre)[[1]])]
-      forma_juridica1 <- str_trim(substring(nuevo_nombre,pos_ultimo_espacio,nchar(nuevo_nombre)))
 
-      if(nchar(forma_juridica1) > 3 | nchar(forma_juridica1) == 1){
-        forma_juridica1 <- "Otras"
+  #Generación forma jurídica
+  forma_juridica <- c()
+  for(i in 1:length(data$`Denominación social`)){
+    # Si tiene la palbra sociedad no tiene el acrónimo SIN ACRÓNIMO
+    pos_ultimo_espacio <- gregexpr(" ",data$`Denominación social`[i])[[1]][length(gregexpr(" ",data$`Denominación social`[i])[[1]])]
+    acronimo <- gsub("[.]","",str_trim(substring(data$`Denominación social`[i],pos_ultimo_espacio,nchar(data$`Denominación social`[i]))))
+    if(any(grepl("sociedad",tolower(data$`Denominación social`[i]))) & acronimo != "SL" & acronimo != "SA"){
+      pos_sociedad <- gregexpr("sociedad", tolower(data$`Denominación social`[i]))[[1]][length(gregexpr("sociedad",tolower(data$`Denominación social`[i]))[[1]])]
+      forma_juridica1 <- str_trim(substring(data$`Denominación social`[i],pos_sociedad,nchar(data$`Denominación social`[i])))
+
+      if(any(grepl("liquidacion",tolower(data$`Denominación social`[i])))){
+        nuevo_nombre <- gsub(" EN LIQUIDACION","",data$`Denominación social`[i])
+        pos_ultimo_espacio <- gregexpr(" ",nuevo_nombre)[[1]][length(gregexpr(" ",nuevo_nombre)[[1]])]
+        forma_juridica1 <- str_trim(substring(nuevo_nombre,pos_ultimo_espacio,nchar(nuevo_nombre)))
+
+        if(nchar(forma_juridica1) > 3){
+          forma_juridica1 <- "Otras"
+        }
       }
-    }else{
-      if(nchar(gsub("\\.","",forma_juridica1)) > 2 & all(gsub("\\.","",forma_juridica1) != c("AIE","OMS","SAD","SAL","SAP","SCP","SLL","SLP"))){
-        forma_juridica1 <- "Otras"
+
+      if(forma_juridica1 != "Otras"){
+        forma_juridica1 <- gsub("DE ","",forma_juridica1)
+        separado <- str_split(forma_juridica1[length(forma_juridica1)]," ")
+        enlace <- NULL
+        for(p in 1:length(separado[[1]])){
+          enlace <- c(enlace,substring(separado[[1]][p],1,1))
+        }
+        if(length(enlace) > 3){
+          forma_juridica1 <- "Otras"
+        }else{
+          forma_juridica1 <- paste(enlace, collapse = ".")
+        }
+
+        if(nchar(gsub("\\.","",forma_juridica1)) > 2 & all(gsub("\\.","",forma_juridica1) != c("AIE","OMS","SAD","SAL","SAP","SCP","SLL","SLP"))){
+          forma_juridica1 <- "Otras"
+        }
+      }
+    }else{   # CON ACRÓNIMO
+      pos_ultimo_espacio <- gregexpr(" ",data$`Denominación social`[i])[[1]][length(gregexpr(" ",data$`Denominación social`[i])[[1]])]
+      forma_juridica1 <- str_trim(substring(data$`Denominación social`[i],pos_ultimo_espacio,nchar(data$`Denominación social`[i])))
+
+      if(nchar(forma_juridica1) > 3){
+        nuevo_nombre <- gsub(" EN LIQUIDACION","",data$`Denominación social`[i])
+        pos_ultimo_espacio <- gregexpr(" ",nuevo_nombre)[[1]][length(gregexpr(" ",nuevo_nombre)[[1]])]
+        forma_juridica1 <- str_trim(substring(nuevo_nombre,pos_ultimo_espacio,nchar(nuevo_nombre)))
+
+        if(nchar(forma_juridica1) > 3){
+          forma_juridica1 <- "Otras"
+        }
+      }else{
+        if(nchar(gsub("\\.","",forma_juridica1)) > 2 & all(gsub("\\.","",forma_juridica1) != c("AIE","OMS","SAD","SAL","SAP","SCP","SLL","SLP"))){
+          forma_juridica1 <- "Otras"
+        }
       }
     }
-    forma_juridica <- c(forma_juridica, forma_juridica1)
+    forma_juridica <- c(forma_juridica, forma_juridica1[1])
   }
 
   data$`Forma Jurídica` <- gsub("\\.","",forma_juridica)
@@ -557,18 +596,18 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   # ==========================================================
 
   # 1) CONEXIÓN BBDD
-  db          <- 'amb'
-  host_db     <- '94.130.26.60'
+  db          <- 'datawarehouse'
+  host_db     <- '78.47.226.232'
   db_port     <- '5432'
   db_user     <- 'postgres'
-  db_password <- 'root_tech_2019'
+  db_password <- 'postgressysadmin_2019'
 
   con <- dbConnect(RPostgres::Postgres(), dbname = db, host=host_db, port=db_port, user=db_user, password=db_password)
 
   # 2) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
   dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-  consulta_evitar_duplicados <- 'INSERT INTO borme2 SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme2 b where b."Empresa" = a."Empresa" AND b."Fecha" = a."Fecha")'
+  consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."Empresa" = a."Empresa" AND b."Fecha" = a."Fecha")'
 
   dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
   dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
