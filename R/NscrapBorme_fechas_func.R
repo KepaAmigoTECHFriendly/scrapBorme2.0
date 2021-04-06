@@ -601,99 +601,6 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         data$fecha <- rep(format(as.Date(fecha_borme),"%d/%m/%Y"),nrow(data))
         data[is.na(data)] <- "-"
 
-        #Cambio nombres
-
-        nombres <- c("Denominación social","Fusión sociedades absorbidas", "Modificaciones estatutarias",
-                     "Cambio denominación social", "Cambio domicilio social", "Cambio objeto social",
-                     "Ceses liquiSoli", "Ceses apoderado", "Ceses Adm. Único",
-                     "Ceses liquidador", "Ceses liquidador mancomunado", "Ceses adminSolid",
-                     "Ceses Adm. Mancomunado", "Ceses Soc. Prof", "Ceses depositorio",
-                     "Ceses entid. Deposit.", "Ceses entid. Promo.", "Ceses consejero",
-                     "Ceses vicepresidente", "Ceses presidente", "Ceses secretario",
-                     "Nombramiento liquiSoli", "Nombramiento apoderado", "Nombramiento Adm. Único",
-                     "Nombramiento liquidador", "Nombramiento liquidador mancomunado", "Nombramiento Adm. Solid",
-                     "Nombramiento Soc. Prof", "Nombramiento auditor","Nombramiento Adm. Mancomunado",
-                     "Nombramiento Entid. Deposit.", "Nombramiento Entid. Promo.", "Nombramiento consejero",
-                     "Nombramiento vicepresidente","Nombramiento presidente", "Nombramiento secretario",
-                     "Ampliación capital suscrito", "Ampliación capital resultante suscrito", "Ampliación capital desembolsado",
-                     "Ampliación capital resultante desembolsado", "Ampliación capital", "Declaración unipersonalidad socio único",
-                     "Reducción capital importe reducción","Reducción capital resultante suscrito", "Reelecciones Adm. Único",
-                     "Reelecciones auditor", "Reelecciones auditor suplente", "Revocaciones auditor",
-                     "Revocaciones apoderado", "Revocaciones apoderado mancomunado", "Revocaciones apoderadoSol",
-                     "Situación Concursal Procedimiento", "Situación Concursal Resolución firme","Situación Concursal Fecha Resolución",
-                     "Situación Concursal Proceso", "Situación Concursal Juzgado", "Situación Concursal Juez",
-                     "Situación Concursal Resoluciones", "Escisión", "Transformación", "Disolución", "Extinción",
-                     "Constitución comienzo operaciones", "Constitución objeto social","Constitución domicilio social",
-                     "Constitución capital", "Otros conceptos","Datos registrales",
-                     "Coordenadas empresa","Latitud", "Longitud","Municipio",
-                     "Distancia respecto municipio en km","Dentro", "Provincia","Fecha"
-        )
-
-        colnames(data) <- nombres
-
-        #Extracción forma jurídica
-
-        #Generación forma jurídica
-        forma_juridica <- c()
-        for(i in 1:length(data$`Denominación social`)){
-          # Si tiene la palbra sociedad no tiene el acrónimo SIN ACRÓNIMO
-          pos_ultimo_espacio <- gregexpr(" ",data$`Denominación social`[i])[[1]][length(gregexpr(" ",data$`Denominación social`[i])[[1]])]
-          acronimo <- gsub("[.]","",str_trim(substring(data$`Denominación social`[i],pos_ultimo_espacio,nchar(data$`Denominación social`[i]))))
-          if(any(grepl("sociedad",tolower(data$`Denominación social`[i]))) & acronimo != "SL" & acronimo != "SA"){
-            pos_sociedad <- gregexpr("sociedad", tolower(data$`Denominación social`[i]))[[1]][length(gregexpr("sociedad",tolower(data$`Denominación social`[i]))[[1]])]
-            forma_juridica1 <- str_trim(substring(data$`Denominación social`[i],pos_sociedad,nchar(data$`Denominación social`[i])))
-
-            if(any(grepl("liquidacion",tolower(data$`Denominación social`[i])))){
-              nuevo_nombre <- gsub(" EN LIQUIDACION","",data$`Denominación social`[i])
-              pos_ultimo_espacio <- gregexpr(" ",nuevo_nombre)[[1]][length(gregexpr(" ",nuevo_nombre)[[1]])]
-              forma_juridica1 <- str_trim(substring(nuevo_nombre,pos_ultimo_espacio,nchar(nuevo_nombre)))
-
-              if(nchar(forma_juridica1) > 3){
-                forma_juridica1 <- "Otras"
-              }
-            }
-
-            if(forma_juridica1 != "Otras"){
-              forma_juridica1 <- gsub("DE ","",forma_juridica1)
-              separado <- str_split(forma_juridica1[length(forma_juridica1)]," ")
-              enlace <- NULL
-              for(p in 1:length(separado[[1]])){
-                enlace <- c(enlace,substring(separado[[1]][p],1,1))
-              }
-              if(length(enlace) > 3){
-                forma_juridica1 <- "Otras"
-              }else{
-                forma_juridica1 <- paste(enlace, collapse = ".")
-              }
-
-              if(nchar(gsub("\\.","",forma_juridica1)) > 2 & all(gsub("\\.","",forma_juridica1) != c("AIE","OMS","SAD","SAL","SAP","SCP","SLL","SLP"))){
-                forma_juridica1 <- "Otras"
-              }
-            }
-          }else{   # CON ACRÓNIMO
-            pos_ultimo_espacio <- gregexpr(" ",data$`Denominación social`[i])[[1]][length(gregexpr(" ",data$`Denominación social`[i])[[1]])]
-            forma_juridica1 <- str_trim(substring(data$`Denominación social`[i],pos_ultimo_espacio,nchar(data$`Denominación social`[i])))
-
-            if(nchar(forma_juridica1) > 3){
-              nuevo_nombre <- gsub(" EN LIQUIDACION","",data$`Denominación social`[i])
-              pos_ultimo_espacio <- gregexpr(" ",nuevo_nombre)[[1]][length(gregexpr(" ",nuevo_nombre)[[1]])]
-              forma_juridica1 <- str_trim(substring(nuevo_nombre,pos_ultimo_espacio,nchar(nuevo_nombre)))
-
-              if(nchar(forma_juridica1) > 3){
-                forma_juridica1 <- "Otras"
-              }
-            }else{
-              if(nchar(gsub("\\.","",forma_juridica1)) > 2 & all(gsub("\\.","",forma_juridica1) != c("AIE","OMS","SAD","SAL","SAP","SCP","SLL","SLP"))){
-                forma_juridica1 <- "Otras"
-              }
-            }
-          }
-          forma_juridica <- c(forma_juridica, forma_juridica1[1])
-        }
-
-        data$`Forma Jurídica` <- gsub("\\.","",forma_juridica)
-
-
 
         # =================================================================
         # VOLCADO EN BBDD POSTGRESQL
@@ -703,7 +610,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
         #dbWriteTable(con, 'borme',data, temporary = FALSE)
         dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-        consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."Denominación social" = a."Denominación social" AND b."Fecha" = a."Fecha")'
+        consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b."fecha" = a."fecha")'
 
         dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
         dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
