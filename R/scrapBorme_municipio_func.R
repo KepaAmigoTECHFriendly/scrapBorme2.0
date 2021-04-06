@@ -404,7 +404,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
       domicilio <- gsub(" ","%20",domicilio)
       domicilio <- iconv(domicilio,from="UTF-8",to="ASCII//TRANSLIT")
 
-      Sys.sleep(6) #Necesario por requisito HERE API versión fremium
+      Sys.sleep(6) # Es necesario esperar >5 segundos por requisito de HERE api. Actualización del 01/04/2021
       coordenadas_domicilios <- jsonlite::fromJSON(paste(geocoder_endpoint,URLencode(domicilio),"%20(Espa%C3%B1a)",sep=""))
       coordenadas_domicilios <- coordenadas_domicilios$Response$View$Result %>% as.data.frame()
 
@@ -502,7 +502,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   data[is.na(data)] <- "-"
 
   #Cambio nombres
-  nombres <- c("Empresa","Fusión sociedades abosrbidas", "Modificaciones estatutarias",
+  nombres <- c("Denominación social","Fusión sociedades absorbidas", "Modificaciones estatutarias",
                "Cambio denominación social", "Cambio domicilio social", "Cambio objeto social",
                "Ceses liquiSoli", "Ceses apoderado", "Ceses Adm. Único",
                "Ceses liquidador", "Ceses liquidador mancomunado", "Ceses adminSolid",
@@ -531,24 +531,63 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
   colnames(data) <- nombres
 
   #Extracción forma jurídica
-  forma_juridica <- c()
-  for(i in 1:length(data$Empresa)){
-    pos_ultimo_espacio <- gregexpr(" ",data$Empresa[i])[[1]][length(gregexpr(" ",data$Empresa[i])[[1]])]
-    forma_juridica1 <- str_trim(substring(data$Empresa[i],pos_ultimo_espacio,nchar(data$Empresa[i])))
-    if(nchar(forma_juridica1) > 3){
-      nuevo_nombre <- gsub(" EN LIQUIDACION","",data$Empresa[i])
-      pos_ultimo_espacio <- gregexpr(" ",nuevo_nombre)[[1]][length(gregexpr(" ",nuevo_nombre)[[1]])]
-      forma_juridica1 <- str_trim(substring(nuevo_nombre,pos_ultimo_espacio,nchar(nuevo_nombre)))
 
-      if(nchar(forma_juridica1) > 3 | nchar(forma_juridica1) == 1){
-        forma_juridica1 <- "Otras"
+  #Generación forma jurídica
+  forma_juridica <- c()
+  for(i in 1:length(data$`Denominación social`)){
+    # Si tiene la palbra sociedad no tiene el acrónimo SIN ACRÓNIMO
+    pos_ultimo_espacio <- gregexpr(" ",data$`Denominación social`[i])[[1]][length(gregexpr(" ",data$`Denominación social`[i])[[1]])]
+    acronimo <- gsub("[.]","",str_trim(substring(data$`Denominación social`[i],pos_ultimo_espacio,nchar(data$`Denominación social`[i]))))
+    if(any(grepl("sociedad",tolower(data$`Denominación social`[i]))) & acronimo != "SL" & acronimo != "SA"){
+      pos_sociedad <- gregexpr("sociedad", tolower(data$`Denominación social`[i]))[[1]][length(gregexpr("sociedad",tolower(data$`Denominación social`[i]))[[1]])]
+      forma_juridica1 <- str_trim(substring(data$`Denominación social`[i],pos_sociedad,nchar(data$`Denominación social`[i])))
+
+      if(any(grepl("liquidacion",tolower(data$`Denominación social`[i])))){
+        nuevo_nombre <- gsub(" EN LIQUIDACION","",data$`Denominación social`[i])
+        pos_ultimo_espacio <- gregexpr(" ",nuevo_nombre)[[1]][length(gregexpr(" ",nuevo_nombre)[[1]])]
+        forma_juridica1 <- str_trim(substring(nuevo_nombre,pos_ultimo_espacio,nchar(nuevo_nombre)))
+
+        if(nchar(forma_juridica1) > 3){
+          forma_juridica1 <- "Otras"
+        }
       }
-    }else{
-      if(nchar(gsub("\\.","",forma_juridica1)) > 2 & all(gsub("\\.","",forma_juridica1) != c("AIE","OMS","SAD","SAL","SAP","SCP","SLL","SLP"))){
-        forma_juridica1 <- "Otras"
+
+      if(forma_juridica1 != "Otras"){
+        forma_juridica1 <- gsub("DE ","",forma_juridica1)
+        separado <- str_split(forma_juridica1[length(forma_juridica1)]," ")
+        enlace <- NULL
+        for(p in 1:length(separado[[1]])){
+          enlace <- c(enlace,substring(separado[[1]][p],1,1))
+        }
+        if(length(enlace) > 3){
+          forma_juridica1 <- "Otras"
+        }else{
+          forma_juridica1 <- paste(enlace, collapse = ".")
+        }
+
+        if(nchar(gsub("\\.","",forma_juridica1)) > 2 & all(gsub("\\.","",forma_juridica1) != c("AIE","OMS","SAD","SAL","SAP","SCP","SLL","SLP"))){
+          forma_juridica1 <- "Otras"
+        }
+      }
+    }else{   # CON ACRÓNIMO
+      pos_ultimo_espacio <- gregexpr(" ",data$`Denominación social`[i])[[1]][length(gregexpr(" ",data$`Denominación social`[i])[[1]])]
+      forma_juridica1 <- str_trim(substring(data$`Denominación social`[i],pos_ultimo_espacio,nchar(data$`Denominación social`[i])))
+
+      if(nchar(forma_juridica1) > 3){
+        nuevo_nombre <- gsub(" EN LIQUIDACION","",data$`Denominación social`[i])
+        pos_ultimo_espacio <- gregexpr(" ",nuevo_nombre)[[1]][length(gregexpr(" ",nuevo_nombre)[[1]])]
+        forma_juridica1 <- str_trim(substring(nuevo_nombre,pos_ultimo_espacio,nchar(nuevo_nombre)))
+
+        if(nchar(forma_juridica1) > 3){
+          forma_juridica1 <- "Otras"
+        }
+      }else{
+        if(nchar(gsub("\\.","",forma_juridica1)) > 2 & all(gsub("\\.","",forma_juridica1) != c("AIE","OMS","SAD","SAL","SAP","SCP","SLL","SLP"))){
+          forma_juridica1 <- "Otras"
+        }
       }
     }
-    forma_juridica <- c(forma_juridica, forma_juridica1)
+    forma_juridica <- c(forma_juridica, forma_juridica1[1])
   }
 
   data$`Forma Jurídica` <- gsub("\\.","",forma_juridica)
@@ -559,7 +598,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
 
   # 1) CONEXIÓN BBDD
   db          <- 'datawarehouse'
-  host_db     <- '82.223.66.83'
+  host_db     <- '78.47.226.232'
   db_port     <- '5432'
   db_user     <- 'postgres'
   db_password <- 'postgressysadmin_2019'
