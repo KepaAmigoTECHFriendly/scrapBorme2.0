@@ -34,7 +34,7 @@ N_lectura_borme_fechas <- function(municipio, radio, provincias, fecha = Sys.Dat
 
   # 1) CONEXIÓN BBDD
   db          <- 'datawarehouse'
-  host_db     <- '78.47.226.232'
+  host_db     <- '82.223.66.83'
   db_port     <- '5432'
   db_user     <- 'postgres'
   db_password <- 'postgressysadmin_2019'
