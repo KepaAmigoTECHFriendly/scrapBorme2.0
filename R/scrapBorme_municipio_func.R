@@ -376,7 +376,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
 
   #Coordenadas de referencia del municipio con geocoder API
   #Endpoint geocoder API
-  geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=vHM__74tNz7Mgyszyld_kleAIdVpSRHYEeRfcSqM6XQ&searchtext="
+  geocoder_endpoint <- "https://geocoder.ls.hereapi.com/6.2/geocode.json?apiKey=nQ2hv2xZ5JqWL72bJKiytIF5OZeDVLTqJVt3QZs9PzE&searchtext="
 
   coordenadas_ref_municipio <- jsonlite::fromJSON(paste(geocoder_endpoint,URLencode(municipio),"%20(Espa%C3%B1a)",sep = ""))
   coordenadas_ref_municipio <- coordenadas_ref_municipio$Response$View$Result %>% as.data.frame()
@@ -404,7 +404,7 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
       domicilio <- gsub(" ","%20",domicilio)
       domicilio <- iconv(domicilio,from="UTF-8",to="ASCII//TRANSLIT")
 
-      Sys.sleep(6) # Es necesario esperar >5 segundos por requisito de HERE api. Actualización del 01/04/2021
+      Sys.sleep(10) #Necesario por requisito HERE API versión fremium
       coordenadas_domicilios <- jsonlite::fromJSON(paste(geocoder_endpoint,URLencode(domicilio),"%20(Espa%C3%B1a)",sep=""))
       coordenadas_domicilios <- coordenadas_domicilios$Response$View$Result %>% as.data.frame()
 
@@ -501,23 +501,75 @@ lectura_borme_municipio <- function(url, municipio, radio, provincia, fecha_borm
 
   data[is.na(data)] <- "-"
 
+  #Cambio nombres
+  nombres <- c("Empresa","Fusión sociedades abosrbidas", "Modificaciones estatutarias",
+               "Cambio denominación social", "Cambio domicilio social", "Cambio objeto social",
+               "Ceses liquiSoli", "Ceses apoderado", "Ceses Adm. Único",
+               "Ceses liquidador", "Ceses liquidador mancomunado", "Ceses adminSolid",
+               "Ceses Adm. Mancomunado", "Ceses Soc. Prof", "Ceses depositorio",
+               "Ceses entid. Deposit.", "Ceses entid. Promo.", "Ceses consejero",
+               "Ceses vicepresidente", "Ceses presidente", "Ceses secretario",
+               "Nombramiento liquiSoli", "Nombramiento apoderado", "Nombramiento Adm. Único",
+               "Nombramiento liquidador", "Nombramiento liquidador mancomunado", "Nombramiento Adm. Solid",
+               "Nombramiento Soc. Prof", "Nombramiento auditor","Nombramiento Adm. Mancomunado",
+               "Nombramiento Entid. Deposit.", "Nombramiento Entid. Promo.", "Nombramiento consejero",
+               "Nombramiento vicepresidente","Nombramiento presidente", "Nombramiento secretario",
+               "Ampliación capital suscrito", "Ampliación capital resultante suscrito", "Ampliación capital desembolsado",
+               "Ampliación capital resultante desembolsado", "Ampliación capital", "Declaración unipersonalidad socio único",
+               "Reducción capital importe reducción","Reducción capital resultante suscrito", "Reelecciones Adm. Único",
+               "Reelecciones auditor", "Reelecciones auditor suplente", "Revocaciones auditor",
+               "Revocaciones apoderado", "Revocaciones apoderado mancomunado", "Revocaciones apoderadoSol",
+               "Situación Concursal Procedimiento", "Situación Concursal Resolución firme","Situación Concursal Fecha Resolución",
+               "Situación Concursal Proceso", "Situación Concursal Juzgado", "Situación Concursal Juez",
+               "Situación Concursal Resoluciones", "Escisión", "Transformación", "Disolución", "Extinción",
+               "Constitución comienzo operaciones", "Constitución objeto social","Constitución domicilio social",
+               "Constitución capital", "Otros conceptos","Datos registrales",
+               "Coordenadas empresa","Latitud", "Longitud","Municipio",
+               "Distancia respecto municipio en km","Dentro", "Provincia","Fecha"
+  )
+
+  colnames(data) <- nombres
+
+  #Extracción forma jurídica
+  forma_juridica <- c()
+  for(i in 1:length(data$Empresa)){
+    pos_ultimo_espacio <- gregexpr(" ",data$Empresa[i])[[1]][length(gregexpr(" ",data$Empresa[i])[[1]])]
+    forma_juridica1 <- str_trim(substring(data$Empresa[i],pos_ultimo_espacio,nchar(data$Empresa[i])))
+    if(nchar(forma_juridica1) > 3){
+      nuevo_nombre <- gsub(" EN LIQUIDACION","",data$Empresa[i])
+      pos_ultimo_espacio <- gregexpr(" ",nuevo_nombre)[[1]][length(gregexpr(" ",nuevo_nombre)[[1]])]
+      forma_juridica1 <- str_trim(substring(nuevo_nombre,pos_ultimo_espacio,nchar(nuevo_nombre)))
+
+      if(nchar(forma_juridica1) > 3 | nchar(forma_juridica1) == 1){
+        forma_juridica1 <- "Otras"
+      }
+    }else{
+      if(nchar(gsub("\\.","",forma_juridica1)) > 2 & all(gsub("\\.","",forma_juridica1) != c("AIE","OMS","SAD","SAL","SAP","SCP","SLL","SLP"))){
+        forma_juridica1 <- "Otras"
+      }
+    }
+    forma_juridica <- c(forma_juridica, forma_juridica1)
+  }
+
+  data$`Forma Jurídica` <- gsub("\\.","",forma_juridica)
+
   # ==========================================================
   # VOLCADO EN BBDD
   # ==========================================================
 
   # 1) CONEXIÓN BBDD
-  db          <- 'datawarehouse'
-  host_db     <- '82.223.66.83'
+  db          <- 'amb'
+  host_db     <- '94.130.26.60'
   db_port     <- '5432'
   db_user     <- 'postgres'
-  db_password <- 'postgressysadmin_2019'
+  db_password <- 'root_tech_2019'
 
   con <- dbConnect(RPostgres::Postgres(), dbname = db, host=host_db, port=db_port, user=db_user, password=db_password)
 
   # 2) CREACIÓN TABLA TEMPORAL CON DATOS ACTUALES PARA EVITAR DUPLICADOS EN LA TABLA PRINCIPAL
   dbWriteTable(con, 'borme_temporal',data, temporary = TRUE)
 
-  consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."EMPRESA" = a."EMPRESA" AND b."fecha" = a."fecha")'
+  consulta_evitar_duplicados <- 'INSERT INTO borme SELECT * FROM borme_temporal a WHERE NOT EXISTS (SELECT 0 FROM borme b where b."Empresa" = a."Empresa" AND b."Fecha" = a."Fecha")'
 
   dbGetQuery(con, consulta_evitar_duplicados)  # Ejecución consulta
   dbRemoveTable(con,"borme_temporal")   # Eliminación tabla temporal
